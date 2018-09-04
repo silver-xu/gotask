@@ -15,57 +15,69 @@ go get github.com/silver-xu/gotask
 ## Simple Usage:
 
 ```golang
-url := "https://www.google.com/"
+package main
 
-response, err := gotask.Await(func() (interface{}, error) {
-    resp, err := http.Get(url)
+import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
 
-    if err == nil {
-        defer resp.Body.Close()
-    } else {
-        return nil, err
-    }
+	"github.com/silver-xu/gotask"
+)
 
-    body, err := ioutil.ReadAll(resp.Body)
+func main() {
+	response, err := gotask.Await(doWork, nil)
 
-    if err != nil {
-        return nil, err
-    }
-
-    return string(body), err
-
-}, nil)
-
-if err == nil {
-    fmt.Println(response)
+	if err == nil {
+		fmt.Println(response)
+	}
 }
+
+func doWork() (interface{}, error) {
+	url := "https://www.google.com/"
+
+	resp, err := http.Get(url)
+
+	if err == nil {
+		defer resp.Body.Close()
+	} else {
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return string(body), err
+}
+
 ```
 
 ## Task Cancellation:
 
 ```golang
-url := "https://www.google.com/"
+package main
 
-cancelChannel := make(chan bool)
+import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
 
-response, err := gotask.Await(func() (interface{}, error) {
-    resp, err := http.Get(url)
+	"github.com/silver-xu/gotask"
+)
 
-    if err == nil {
-        defer resp.Body.Close()
-    } else {
-        return nil, err
-    }
+func main() {
+	cancelChannel := make(chan bool)
 
-    body, err := ioutil.ReadAll(resp.Body)
+	response, err := gotask.Await(doWork, cancelChannel)
 
-    if err != nil {
-        return nil, err
-    }
+	cancelChannel <- true
+}
 
-    return string(body), err
+func doWork() (interface{}, error) {
+	//Todo: works
+}
 
-}, cancelChannel)
-
-cancelChannel <- true
 ```

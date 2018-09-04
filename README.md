@@ -12,7 +12,36 @@ It also allows optional cancellation of the task by passing boolean to the cance
 go get github.com/silver-xu/gotask
 ```
 
-## Sample:
+## Simple Usage:
+
+```golang
+url := "https://www.google.com/"
+
+response, err := gotask.Await(func() (interface{}, error) {
+    resp, err := http.Get(url)
+
+    if err == nil {
+        defer resp.Body.Close()
+    } else {
+        return nil, err
+    }
+
+    body, err := ioutil.ReadAll(resp.Body)
+
+    if err != nil {
+        return nil, err
+    }
+
+    return string(body), err
+
+}, nil)
+
+if err == nil {
+    fmt.Println(response)
+}
+```
+
+## Task Cancellation:
 
 ```golang
 url := "https://www.google.com/"
@@ -38,7 +67,5 @@ response, err := gotask.Await(func() (interface{}, error) {
 
 }, cancelChannel)
 
-if err == nil {
-    fmt.Println(response)
-}
+cancelChannel <- true
 ```

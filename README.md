@@ -9,10 +9,12 @@ Currently the project supports Await and WaitAll
 ## Await
 Use c# style await to spawn a goroutine, finish the task and comeback. The main routine will wait for the result
 
-It also allows optional cancellation of the task by passing boolean to the cancelChannel.
+It also allows optional timeout of the task after n Seconds
 
 ## WaitAll
 Use C# style wait all to spawn multiple goroutine to finish a batch of jobs. The number of goroutine spawned can be controlled by numberOfWorkers flag.
+
+It also allows optional timeout of the tasks after n Seconds
 
 ## Execute the following in terminal to install gotask
 
@@ -34,10 +36,13 @@ import (
 )
 
 func main() {
-	response, err := gotask.Await(doWork, nil)
+    //timeout after 1 seconds
+	response, err := gotask.Await(doWork, 1)
 
 	if err == nil {
 		fmt.Println(response)
+	} else {
+		fmt.Println(err)
 	}
 }
 
@@ -60,36 +65,9 @@ func doWork() (interface{}, error) {
 
 	return string(body), err
 }
-
 ```
 
-## Await Task Cancellation:
-
-```golang
-package main
-
-import (
-	"fmt"
-	"io/ioutil"
-	"net/http"
-
-	"github.com/silver-xu/gotask"
-)
-
-func main() {
-	cancelChannel := make(chan bool)
-
-	response, err := gotask.Await(doWork, cancelChannel)
-
-	cancelChannel <- true
-}
-
-func doWork() (interface{}, error) {
-	//Todo: works
-}
-```
-
-## Simple WaitAll
+## Simple WhenAll
 
 ```golang
 package main
@@ -112,7 +90,8 @@ func main() {
 		},
 	}
 
-	results, errs := gotask.WhenAll(jobs, 2)
+    //timeout after 5 seconds
+	results, errs := gotask.WhenAll(jobs, 2, 5)
 
 	for key, ret := range results {
 		fmt.Println("key " + key + " has result of: " + strconv.Itoa(ret.(int)))

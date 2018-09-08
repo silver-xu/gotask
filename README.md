@@ -4,7 +4,15 @@ The Golang provides a easy and raw way to deal with concurrency with the legenda
 
 I have written this simple gotask package to allow C# coroutine style statement to automate the above process and simplify development.
 
+Currently the project supports Await and WaitAll
+
+## Await
+Use c# style await to spawn a goroutine, finish the task and comeback. The main routine will wait for the result
+
 It also allows optional cancellation of the task by passing boolean to the cancelChannel.
+
+## WaitAll
+Use C# style wait all to spawn multiple goroutine to finish a batch of jobs. The number of goroutine spawned can be controlled by numberOfWorkers flag.
 
 ## Execute the following in terminal to install gotask
 
@@ -12,7 +20,7 @@ It also allows optional cancellation of the task by passing boolean to the cance
 go get github.com/silver-xu/gotask
 ```
 
-## Simple Usage:
+## Simple Await:
 
 ```golang
 package main
@@ -55,7 +63,7 @@ func doWork() (interface{}, error) {
 
 ```
 
-## Task Cancellation:
+## Await Task Cancellation:
 
 ```golang
 package main
@@ -79,5 +87,39 @@ func main() {
 func doWork() (interface{}, error) {
 	//Todo: works
 }
+```
 
+## Simple WaitAll
+
+```golang
+package main
+
+import (
+	"errors"
+	"fmt"
+	"strconv"
+
+	"github.com/silver-xu/gotask"
+)
+
+func main() {
+	jobs := map[string]func() (interface{}, error){
+		"abc": func() (interface{}, error) {
+			return 1, nil
+		},
+		"def": func() (interface{}, error) {
+			return nil, errors.New("My Error")
+		},
+	}
+
+	results, errs := gotask.WhenAll(jobs, 2)
+
+	for key, ret := range results {
+		fmt.Println("key " + key + " has result of: " + strconv.Itoa(ret.(int)))
+	}
+
+	for key, err := range errs {
+		fmt.Println("key " + key + " has error of: " + err.(error).Error())
+	}
+}
 ```

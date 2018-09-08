@@ -11,31 +11,39 @@ func Await(do func() (interface{}, error), cancel chan bool) (interface{}, error
 	errorChannel := make(chan error)
 
 	go func(do func() (interface{}, error)) {
-		select {
-		case <-cancel:
-			return
-		default:
-			result, err := do()
+		for {
+			select {
+			case <-cancel:
+				return
+			default:
+				result, err := do()
 
-			taskChannel <- result
-			errorChannel <- err
+				taskChannel <- result
+				errorChannel <- err
 
-			close(taskChannel)
-			close(errorChannel)
+				close(taskChannel)
+				close(errorChannel)
 
-			return
+				return
+			}
 		}
 	}(do)
 
 	return <-taskChannel, <-errorChannel
 }
 
-func WhenAll(doSlice []func() (interface{}, error), numberOfWorkers int) ([]interface{}, []error) {
-	var results []interface{}
-	var errs []error
+type kvPair struct {
+	key   string
+	value interface{}
+}
+
+/*WhenAll does: Assign the tasks in doSlice to multiple workers throttled by numberOfWorkers parameter */
+func WhenAll(doSlice map[string]func() (interface{}, error), numberOfWorkers int) (map[string]interface{}, map[string]error) {
+	results := make(map[string]interface{})
+	errs := make(map[string]error)
 
 	if doSlice == nil {
-		errs = append(errs, errors.New("Argument Exception"))
+		errs[""] = errors.New("Argument Exception")
 
 		return results, errs
 	}
@@ -45,30 +53,35 @@ func WhenAll(doSlice []func() (interface{}, error), numberOfWorkers int) ([]inte
 		numberOfWorkers = len(doSlice)
 	}
 
-	jobsChannel := make(chan func() (interface{}, error), len(doSlice))
+	jobsChannel := make(chan kvPair, len(doSlice))
 
-	for i := 0; i < len(doSlice); i++ {
-		jobsChannel <- doSlice[i]
+	for key, function := range doSlice {
+		jobsChannel <- kvPair{key, function}
 	}
 
 	close(jobsChannel)
 
 	var worksWaitGroup sync.WaitGroup
-	resultsChannel := make(chan interface{}, len(doSlice))
-	errorsChannel := make(chan error, len(doSlice))
+	resultsChannel := make(chan kvPair, len(doSlice))
+	errorsChannel := make(chan kvPair, len(doSlice))
 
 	worksWaitGroup.Add(len(doSlice))
 
 	for i := 0; i < numberOfWorkers; i++ {
 
 		//map
-		go func(jobsChannel chan func() (interface{}, error), resultsChannel chan interface{}, errorsChannel chan error, wg *sync.WaitGroup) {
+		go func(jobsChannel chan kvPair, resultsChannel chan kvPair, errorsChannel chan kvPair, wg *sync.WaitGroup) {
 
-			for job := range jobsChannel {
-				ret, err := job()
+			for jobPair := range jobsChannel {
 
-				resultsChannel <- ret
-				errorsChannel <- err
+				work := jobPair.value.(func() (interface{}, error))
+				ret, err := work()
+
+				if err != nil {
+					errorsChannel <- kvPair{jobPair.key, err}
+				} else {
+					resultsChannel <- kvPair{jobPair.key, ret}
+				}
 
 				worksWaitGroup.Done()
 			}
@@ -84,8 +97,12 @@ func WhenAll(doSlice []func() (interface{}, error), numberOfWorkers int) ([]inte
 	close(errorsChannel)
 
 	//reduce
-	for result := range resultsChannel {
-		results = append(results, result)
+	for resultKVPair := range resultsChannel {
+		results[resultKVPair.key] = resultKVPair.value
+	}
+
+	for errKVPair := range errorsChannel {
+		errs[errKVPair.key] = errKVPair.value.(error)
 	}
 
 	return results, errs

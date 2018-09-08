@@ -4,21 +4,24 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/silver-xu/gotask"
 )
 
 func main() {
-	cancelChannel := make(chan bool)
 
-	response, err := gotask.Await(doWork, cancelChannel)
+	response, err := gotask.Await(doWork, 1)
 
 	if err == nil {
 		fmt.Println(response)
+	} else {
+		fmt.Println(err)
 	}
 }
 
 func doWork() (interface{}, error) {
+	time.Sleep(time.Second * 30)
 	url := "https://www.google.com/"
 
 	resp, err := http.Get(url)

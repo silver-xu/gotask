@@ -11,7 +11,7 @@ Use c# style await to spawn a goroutine, finish the task and comeback. The main 
 
 It also allows optional timeout of the task after n Seconds
 
-## WaitAll
+## WhenAll
 Use C# style wait all to spawn multiple goroutine to finish a batch of jobs. The number of goroutine spawned can be controlled by numberOfWorkers flag.
 
 It also allows optional timeout of the tasks after n Seconds

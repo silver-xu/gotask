@@ -3,13 +3,15 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/silver-xu/gotask"
 )
 
 func main() {
-
+	start := time.Now()
 	stockSymbols := []string{
 		"AAL",
 		"AAPL",
@@ -31,90 +33,6 @@ func main() {
 		"CA",
 		"CDNS",
 		"CELG",
-		"CERN",
-		"CHKP",
-		"CHTR",
-		"CTRP",
-		"CTAS",
-		"CSCO",
-		"CTXS",
-		"CMCSA",
-		"COST",
-		"CSX",
-		"CTSH",
-		"DISH",
-		"DLTR",
-		"EA",
-		"EBAY",
-		"ESRX",
-		"EXPE",
-		"FAST",
-		"FB",
-		"FISV",
-		"FOX",
-		"FOXA",
-		"GILD",
-		"GOOG",
-		"GOOGL",
-		"HAS",
-		"HSIC",
-		"HOLX",
-		"ILMN",
-		"INCY",
-		"INTC",
-		"INTU",
-		"ISRG",
-		"Symbol",
-		"IDXX",
-		"JBHT",
-		"JD",
-		"KLAC",
-		"KHC",
-		"LBTYA",
-		"LBTYK",
-		"LRCX",
-		"MELI",
-		"MAR",
-		"MCHP",
-		"MDLZ",
-		"MNST",
-		"MSFT",
-		"MU",
-		"MXIM",
-		"MYL",
-		"NFLX",
-		"NTES",
-		"NVDA",
-		"ORLY",
-		"PAYX",
-		"PCAR",
-		"BKNG",
-		"PYPL",
-		"QCOM",
-		"QRTEA",
-		"REGN",
-		"ROST",
-		"STX",
-		"SHPG",
-		"SIRI",
-		"SWKS",
-		"SBUX",
-		"SYMC",
-		"SNPS",
-		"TTWO",
-		"TSLA",
-		"TXN",
-		"TMUS",
-		"ULTA",
-		"VOD",
-		"VRTX",
-		"WBA",
-		"WDC",
-		"WDAY",
-		"XRAY",
-		"VRSK",
-		"WYNN",
-		"XLNX",
 	}
 
 	urlPattern := "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=%s&apikey=TN1GWKC8BTNTPZ7P"
@@ -142,7 +60,7 @@ func main() {
 		}
 	}
 
-	results, errs := gotask.WhenAll(jobs, 0)
+	results, errs := gotask.WhenAll(jobs, 10)
 
 	for key, ret := range results {
 		fmt.Println("key " + key + " has result of: " + ret.(string))
@@ -151,4 +69,7 @@ func main() {
 	for key, err := range errs {
 		fmt.Println("key " + key + " has error of: " + err.(error).Error())
 	}
+
+	elapsed := time.Since(start)
+	log.Printf("Stock pulling took %s", elapsed)
 }

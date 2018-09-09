@@ -9,12 +9,12 @@ Currently the project supports Await and WaitAll
 ## Await
 Use c# style await to spawn a goroutine, finish the task and comeback. The main routine will wait for the result
 
-It also allows optional timeout of the task after n Seconds
+It also allows optional timeout of the tasks after n Seconds, if timeout is not specified then it will never timeout
 
 ## WhenAll
 Use C# style wait all to spawn multiple goroutine to finish a batch of jobs. The number of goroutine spawned can be controlled by numberOfWorkers flag.
 
-It also allows optional timeout of the tasks after n Seconds
+It also allows optional timeout of the tasks after n Seconds, if timeout is not specified then it will never timeout
 
 ## Execute the following in terminal to install gotask
 

@@ -20,7 +20,7 @@ func main() {
 		},
 	}
 
-	results, errs := gotask.WhenAll(jobs, 2, 2)
+	results, errs := gotask.WhenAll(jobs, 2)
 
 	for key, ret := range results {
 		fmt.Println("key " + key + " has result of: " + strconv.Itoa(ret.(int)))

@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	response, err := gotask.Await(doWork, 1)
+	response, err := gotask.Await(doWork)
 
 	if err == nil {
 		fmt.Println(response)
@@ -21,7 +21,7 @@ func main() {
 }
 
 func doWork() (interface{}, error) {
-	time.Sleep(time.Second * 30)
+	time.Sleep(time.Second * 5)
 	url := "https://www.google.com/"
 
 	resp, err := http.Get(url)

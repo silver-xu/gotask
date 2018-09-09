@@ -3,6 +3,7 @@ package gotask
 import (
 	"context"
 	"errors"
+	"math"
 	"sync"
 	"time"
 )
@@ -12,10 +13,19 @@ type kvPair struct {
 	value interface{}
 }
 
+func getDurationValueOrDefault(timeout []time.Duration) time.Duration {
+	if len(timeout) == 0 {
+		return time.Duration(math.MaxInt64)
+	} else {
+		return time.Second * timeout[0]
+	}
+}
+
 //Await function equivalent to .Net Awaiter
-func Await(do func() (interface{}, error), timeout time.Duration) (interface{}, error) {
+func Await(do func() (interface{}, error), timeout ...time.Duration) (interface{}, error) {
 	resultChannel := make(chan interface{})
 	errorChannel := make(chan error)
+	timeoutVal := getDurationValueOrDefault(timeout)
 
 	go func(do func() (interface{}, error)) {
 
@@ -35,17 +45,18 @@ func Await(do func() (interface{}, error), timeout time.Duration) (interface{}, 
 		return result, nil
 	case err := <-errorChannel:
 		return nil, err
-	case <-time.After(time.Second * timeout):
+	case <-time.After(timeoutVal):
 		return nil, errors.New("Timeout Exception")
 	}
 }
 
 /*WhenAll does: Assign the tasks in jobsSlice to multiple workers throttled by numberOfWorkers parameter
-with a timeout value in seconds*/
-func WhenAll(jobsSlice map[string]func() (interface{}, error), numberOfWorkers int, timeout time.Duration) (map[string]interface{}, map[string]error) {
+with an optional timeout value in seconds*/
+func WhenAll(jobsSlice map[string]func() (interface{}, error), numberOfWorkers int, timeout ...time.Duration) (map[string]interface{}, map[string]error) {
 
 	results := make(map[string]interface{})
 	errs := make(map[string]error)
+	timeoutVal := getDurationValueOrDefault(timeout)
 
 	//parameters validation and correction
 	if jobsSlice == nil {
@@ -73,7 +84,7 @@ func WhenAll(jobsSlice map[string]func() (interface{}, error), numberOfWorkers i
 	resultsChannel := make(chan kvPair, len(jobsSlice))
 	errorsChannel := make(chan kvPair, len(jobsSlice))
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutVal)
 	defer cancel()
 
 	workersWaitGroup.Add(len(jobsSlice))

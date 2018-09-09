@@ -71,33 +71,33 @@ func doWork() (interface{}, error) {
 
 ```golang
 urlPattern := "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=%s&apikey=TN1GWKC8BTNTPZ7P"
-	jobs := make(map[string]func() (interface{}, error))
+jobs := make(map[string]func() (interface{}, error))
 
-	for _, symbol := range stockSymbols {
-		url := fmt.Sprintf(urlPattern, symbol)
+for _, symbol := range stockSymbols {
+	url := fmt.Sprintf(urlPattern, symbol)
 
-		jobs[symbol] = func() (interface{}, error) {
-			resp, err := http.Get(url)
+	jobs[symbol] = func() (interface{}, error) {
+		resp, err := http.Get(url)
 
-			if err == nil {
-				defer resp.Body.Close()
-			} else {
-				return nil, err
-			}
-
-			body, err := ioutil.ReadAll(resp.Body)
-
-			if err != nil {
-				return nil, err
-			}
-
-			return string(body), err
+		if err == nil {
+			defer resp.Body.Close()
+		} else {
+			return nil, err
 		}
-	}
 
-	results, errs := gotask.WhenAll(jobs, 10)
+		body, err := ioutil.ReadAll(resp.Body)
 
-	for key, ret := range results {
-		fmt.Println("key " + key + " has result of: " + ret.(string))
+		if err != nil {
+			return nil, err
+		}
+
+		return string(body), err
 	}
+}
+
+results, errs := gotask.WhenAll(jobs, 10)
+
+for key, ret := range results {
+	fmt.Println("key " + key + " has result of: " + ret.(string))
+}
 ```
